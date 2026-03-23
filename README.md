@@ -4,11 +4,13 @@ Omnissa Horizon Client on Linux has multiple graphical bugs when running under *
 
 ---
 
-## Recommended: Use Horizon Client Next (2512+)
+## Recommended: Use Horizon Client Next (2512.1+)
 
-Starting with version **2512**, Omnissa ships a second client called **Horizon Client Next** alongside the classic client. It is a complete rewrite using **.NET with Avalonia UI** (Skia/Vulkan rendering) instead of GTK3.
+Starting with version **2512**, Omnissa ships a second client called **Horizon Client Next** alongside the classic client. It is a complete rewrite using **.NET with Avalonia UI** (Skia/Vulkan rendering) instead of GTK3. The latest release is **2512.1** (February 2026).
 
 **Horizon Client Next does not suffer from the GTK3/XWayland bugs** documented below. It handles Wayland, HiDPI scaling, and dark themes natively. If you are on version 2512 or later, **use Horizon Client Next instead of applying the patches in this repo**.
+
+Since the March 2026 update, Horizon Client Next also supports **folder organization** for desktops and apps (previously Windows-only) and an **enhanced, repositionable in-session toolbar** on all platforms.
 
 ### Making Horizon Client Next the Default
 
@@ -76,7 +78,7 @@ After this, "Omnissa Horizon Client" in your app launcher will start the Next cl
 
 ---
 
-## Classic Client Fixes (2412 and earlier, or 2512 without Next)
+## Classic Client Fixes (2412 and earlier, or 2512.1 without Next)
 
 The sections below apply only to the **classic GTK3-based client**. If you are using Horizon Client Next, you can skip everything below.
 
@@ -89,6 +91,7 @@ The sections below apply only to the **classic GTK3-based client**. If you are u
 | [Fix 2b](#fix-2b-hidpi-scaling) | UI too small | You have a **HiDPI display** (4K, Retina, scaling > 1x) | `GDK_SCALE=2` |
 | [Fix 2c](#fix-2c-wayland-warning-dialog) | "Protocol not supported" dialog | You run a **Wayland session** (KDE Plasma Wayland, GNOME Wayland, etc.) | `XDG_SESSION_TYPE` + bwrap |
 | [Bug 3](#bug-3-missing-libraries-gtkmm-libclientsdkcprimitive) | Missing PCoIP libs | PCoIP tarball **not installed** alongside the main bundle | manual install step |
+| [Bug 4](#bug-4-horizon-client-next-crashes-on-multi-monitor-setups) | Next crashes on launch | You use **Horizon Client Next** with **multiple monitors** | no fix (Tech Preview) |
 
 ---
 
@@ -124,17 +127,33 @@ When libxkbcommon >= 1.12 sends an `XkbNewKeyboardNotify` event for a device tha
 
 | Distribution | libxkbcommon | libX11 | Status |
 |---|---|---|---|
-| Gentoo (rolling) | >= 1.12 | < 1.8.13 | **Affected** -- apply patch below |
+| Gentoo (rolling) | >= 1.12 | 1.8.12 (stable) / 1.8.13 (~amd64) | **Fixed** if unmasked, otherwise apply patch below |
 | Arch Linux (rolling) | >= 1.12 | >= 1.8.13 | **Fixed** in repos since Feb 2026 |
 | Fedora 43 | 1.11.0 | 1.8.12 | **Not yet affected** -- monitor after updates |
+| Fedora Rawhide (44+) | 1.13.1 | 1.8.12 | **Will be affected** -- monitor for libX11 update |
 
 ### Fix: Gentoo
+
+**Option A: Unmask libX11 1.8.13** (recommended -- uses the upstream fix directly)
+
+```bash
+# Unmask ~amd64 keyword for libX11
+echo "x11-libs/libX11 ~amd64" | sudo tee -a /etc/portage/package.accept_keywords/libX11
+sudo emerge -1 x11-libs/libX11
+
+# Remove the manual patch if previously applied
+sudo rm -f /etc/portage/patches/x11-libs/libX11/mr293-fix-xkb-crash.patch
+```
+
+**Option B: Apply patch to stable libX11 1.8.12**
 
 ```bash
 sudo mkdir -p /etc/portage/patches/x11-libs/libX11
 sudo cp patches/libx11-mr293-fix-xkb-crash.patch /etc/portage/patches/x11-libs/libX11/
 sudo emerge -1 x11-libs/libX11
 ```
+
+> **Note:** Once libX11 1.8.13 is marked stable in Gentoo, the patch is no longer needed and can be removed.
 
 ### Fix: Arch Linux
 
@@ -193,10 +212,10 @@ The launcher script `/usr/bin/horizon-client` needs several environment variable
 ### Applying the Patches
 
 ```bash
-# Fedora (Horizon Client 2512 RPM launcher format)
+# Fedora (Horizon Client 2512.1 RPM launcher format)
 sudo patch -p1 -d / < patches/horizon-client-launcher-fedora.patch
 
-# Gentoo / Arch Linux (Horizon Client 2512 bundle launcher format)
+# Gentoo / Arch Linux (Horizon Client 2512.1 bundle launcher format)
 sudo patch -p1 -d / < patches/horizon-client-launcher.patch
 ```
 
@@ -214,7 +233,7 @@ After patching, review `/usr/bin/horizon-client` and remove any fixes that do no
 
 The Horizon Client consists of two separate downloads. If only the main bundle is installed, PCoIP libraries are missing.
 
-1. Download **both** the main client bundle and the PCoIP tarball from [Omnissa](https://customerconnect.omnissa.com/downloads/info/slug/desktop_end_user_computing/omnissa_horizon_client_for_linux/2512).
+1. Download **both** the main client bundle and the PCoIP tarball from [Omnissa](https://customerconnect.omnissa.com/downloads/info/slug/desktop_end_user_computing/omnissa_horizon_client_for_linux/2512.1).
 
 2. Install the main bundle:
 
@@ -243,7 +262,7 @@ sudo ln -sf /usr/lib/omnissa/horizon/lib/libclientSdkCPrimitive.so /usr/lib/libc
 
 ```bash
 # 1. Install the Horizon Client RPM (includes both classic and Next client)
-sudo dnf install ./Omnissa-Horizon-Client-2512-*.x64.rpm
+sudo dnf install ./Omnissa-Horizon-Client-2512.1-*.x64.rpm
 
 # 2. (Recommended) Make Horizon Client Next the default -- see instructions above
 
@@ -255,7 +274,7 @@ mkdir -p ~/.omnissa
 cp configs/horizon-preferences.example ~/.omnissa/horizon-preferences
 ```
 
-Bug 1 (XKB crash) is not yet triggered on Fedora 43 (libxkbcommon 1.11.0 < 1.12). Monitor after system updates.
+Bug 1 (XKB crash) is not yet triggered on Fedora 43 (libxkbcommon 1.11.0 < 1.12). Monitor after system updates. **Fedora Rawhide (44+)** ships libxkbcommon 1.13.1, which will trigger the bug once libxkbcommon is updated in stable Fedora releases.
 
 ### Gentoo
 
@@ -267,9 +286,13 @@ sudo env TERM=dumb VMWARE_EULAS_AGREED=yes ./Omnissa-Horizon-Client-*.bundle --c
 # 2. (Recommended) Make Horizon Client Next the default -- see instructions above
 
 # 3. Apply libX11 XKB crash fix (Bug 1) if affected
-sudo mkdir -p /etc/portage/patches/x11-libs/libX11
-sudo cp patches/libx11-mr293-fix-xkb-crash.patch /etc/portage/patches/x11-libs/libX11/
+# Option A: Unmask 1.8.13 (recommended)
+echo "x11-libs/libX11 ~amd64" | sudo tee -a /etc/portage/package.accept_keywords/libX11
 sudo emerge -1 x11-libs/libX11
+# Option B: Patch stable 1.8.12
+# sudo mkdir -p /etc/portage/patches/x11-libs/libX11
+# sudo cp patches/libx11-mr293-fix-xkb-crash.patch /etc/portage/patches/x11-libs/libX11/
+# sudo emerge -1 x11-libs/libX11
 
 # 4. (Classic client only) Apply launcher fixes
 sudo patch -p1 -d / < patches/horizon-client-launcher.patch
@@ -293,6 +316,30 @@ See `configs/horizon-preferences.example` for a full recommended configuration.
 
 ---
 
+## Bug 4: Horizon Client Next Crashes on Multi-Monitor Setups
+
+> **Note:** Horizon Client Next is still in **Tech Preview** and not yet production-ready. This is a known limitation of the new client, not something that can be fixed with a patch.
+
+**Applies to you if:** You use **Horizon Client Next 2512.1** (Build 8.17.0) with **multiple monitors**.
+
+### Symptoms
+
+- Client closes immediately after selecting a virtual desktop (no error dialog)
+- Segfault in `libclientSdkCPrimitive.so` at offset `0x99791` (NULL pointer dereference)
+- `dmesg` shows: `segfault at 10 ... in libclientSdkCPrimitive.so`
+
+### Root Cause
+
+Horizon Client Next crashes during `CdkClientInfoGetDisplayInfo` when gathering monitor information for multi-monitor mode. The code dereferences a NULL pointer when indexing into a display info array. Tested with 3 monitors (2560x1080 ultrawide + 2x 1920x1080), broker version 15.0.
+
+The `--desktopSize` CLI flag and `view.multiMonitorMode` preference are ignored -- the server-side preference forces `MultiMonitor` mode regardless.
+
+### Status
+
+No fix available. Multi-monitor desktop sessions do not work with Horizon Client Next on Linux as of version 2512.1.
+
+---
+
 ## Known Limitations
 
 ### Classic Client (GTK3)
@@ -307,7 +354,7 @@ See `configs/horizon-preferences.example` for a full recommended configuration.
 
 ### Horizon Client Next (Avalonia)
 
-- **New in 2512** -- Horizon Client Next is relatively new. Report issues to Omnissa if you encounter problems.
+- **Multi-monitor crash (Bug 4)** -- Horizon Client Next 2512.1 crashes with a segfault in `libclientSdkCPrimitive.so` when launching a desktop on multi-monitor setups. No fix available.
 
 - **URI handlers not registered by default** -- The installer does not register `vmware-view://` and `horizon-client://` URI schemes for the Next client. Use the desktop entry override above to fix this.
 
