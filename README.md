@@ -4,17 +4,17 @@ Omnissa Horizon Client on Linux has multiple graphical bugs when running under *
 
 ---
 
-## Recommended: Use Horizon Client Next (2512.1+)
+## Horizon Client Next (Tech Preview)
 
 Starting with version **2512**, Omnissa ships a second client called **Horizon Client Next** alongside the classic client. It is a complete rewrite using **.NET with Avalonia UI** (Skia/Vulkan rendering) instead of GTK3. The latest release is **2512.1** (February 2026).
 
-**Horizon Client Next does not suffer from the GTK3/XWayland bugs** documented below. It handles Wayland, HiDPI scaling, and dark themes natively. If you are on version 2512 or later, **use Horizon Client Next instead of applying the patches in this repo**.
+Horizon Client Next does not suffer from the GTK3/XWayland bugs documented below (dark theme, HiDPI, Wayland warning). It handles Wayland, HiDPI scaling, and dark themes natively. Since the March 2026 update, it also supports **folder organization** for desktops and apps (previously Windows-only) and an **enhanced, repositionable in-session toolbar** on all platforms.
 
-Since the March 2026 update, Horizon Client Next also supports **folder organization** for desktops and apps (previously Windows-only) and an **enhanced, repositionable in-session toolbar** on all platforms.
+> **Warning:** Horizon Client Next is still in **Tech Preview** and has critical bugs on Linux. Most notably, it **crashes on multi-monitor setups** (see [Bug 4](#bug-4-horizon-client-next-crashes-on-multi-monitor-setups)). If you use multiple monitors, **use the classic client** and apply the patches from this repo.
 
-### Making Horizon Client Next the Default
+### Making Horizon Client Next the Default (Single Monitor Only)
 
-The 2512 installer registers both clients but keeps the classic client as the default. To switch:
+The 2512 installer registers both clients but keeps the classic client as the default. Only switch if you have a **single monitor** setup:
 
 #### Gentoo / Arch Linux (bundle installer)
 
@@ -78,9 +78,9 @@ After this, "Omnissa Horizon Client" in your app launcher will start the Next cl
 
 ---
 
-## Classic Client Fixes (2412 and earlier, or 2512.1 without Next)
+## Classic Client Fixes
 
-The sections below apply only to the **classic GTK3-based client**. If you are using Horizon Client Next, you can skip everything below.
+The sections below apply to the **classic GTK3-based client**, which is the recommended client for multi-monitor setups.
 
 ## Quick Reference
 
@@ -91,7 +91,6 @@ The sections below apply only to the **classic GTK3-based client**. If you are u
 | [Fix 2b](#fix-2b-hidpi-scaling) | UI too small | You have a **HiDPI display** (4K, Retina, scaling > 1x) | `GDK_SCALE=2` |
 | [Fix 2c](#fix-2c-wayland-warning-dialog) | "Protocol not supported" dialog | You run a **Wayland session** (KDE Plasma Wayland, GNOME Wayland, etc.) | `XDG_SESSION_TYPE` + bwrap |
 | [Bug 3](#bug-3-missing-libraries-gtkmm-libclientsdkcprimitive) | Missing PCoIP libs | PCoIP tarball **not installed** alongside the main bundle | manual install step |
-| [Bug 4](#bug-4-horizon-client-next-crashes-on-multi-monitor-setups) | Next crashes on launch | You use **Horizon Client Next** with **multiple monitors** | no fix (Tech Preview) |
 
 ---
 
@@ -168,8 +167,6 @@ Switching to a US keyboard layout can sometimes mitigate the crash. Not a reliab
 ---
 
 ## Bug 2: Launcher Script Fixes (Dark Theme / HiDPI / Wayland Warning)
-
-> **Skip this section if you are using Horizon Client Next** -- these are GTK3-specific issues.
 
 The launcher script `/usr/bin/horizon-client` needs several environment variable additions depending on your setup. The patches in this repo bundle all three fixes with clear labels. **After patching, edit the file and remove any fixes that do not apply to you.**
 
@@ -264,12 +261,10 @@ sudo ln -sf /usr/lib/omnissa/horizon/lib/libclientSdkCPrimitive.so /usr/lib/libc
 # 1. Install the Horizon Client RPM (includes both classic and Next client)
 sudo dnf install ./Omnissa-Horizon-Client-2512.1-*.x64.rpm
 
-# 2. (Recommended) Make Horizon Client Next the default -- see instructions above
-
-# 3. (Classic client only) Apply launcher fixes
+# 2. Apply launcher fixes
 sudo patch -p1 -d / < patches/horizon-client-launcher-fedora.patch
 
-# 4. (Optional) Disable telemetry
+# 3. (Optional) Disable telemetry
 mkdir -p ~/.omnissa
 cp configs/horizon-preferences.example ~/.omnissa/horizon-preferences
 ```
@@ -283,9 +278,7 @@ Bug 1 (XKB crash) is not yet triggered on Fedora 43 (libxkbcommon 1.11.0 < 1.12)
 chmod +x Omnissa-Horizon-Client-*.bundle
 sudo env TERM=dumb VMWARE_EULAS_AGREED=yes ./Omnissa-Horizon-Client-*.bundle --console --required
 
-# 2. (Recommended) Make Horizon Client Next the default -- see instructions above
-
-# 3. Apply libX11 XKB crash fix (Bug 1) if affected
+# 2. Apply libX11 XKB crash fix (Bug 1) if affected
 # Option A: Unmask 1.8.13 (recommended)
 echo "x11-libs/libX11 ~amd64" | sudo tee -a /etc/portage/package.accept_keywords/libX11
 sudo emerge -1 x11-libs/libX11
@@ -294,10 +287,10 @@ sudo emerge -1 x11-libs/libX11
 # sudo cp patches/libx11-mr293-fix-xkb-crash.patch /etc/portage/patches/x11-libs/libX11/
 # sudo emerge -1 x11-libs/libX11
 
-# 4. (Classic client only) Apply launcher fixes
+# 3. Apply launcher fixes (classic client)
 sudo patch -p1 -d / < patches/horizon-client-launcher.patch
 
-# 5. (Optional) Disable telemetry
+# 4. (Optional) Disable telemetry
 mkdir -p ~/.omnissa
 cp configs/horizon-preferences.example ~/.omnissa/horizon-preferences
 ```
