@@ -34,8 +34,7 @@
 +
 +   command -v bwrap &>/dev/null || return 1
 +
-+   local session_id
-+   session_id=$(loginctl --no-legend 2>/dev/null | awk '/seat0/ {print $1; exit}')
++   local session_id="${XDG_SESSION_ID:-}"
 +   [[ -z "$session_id" ]] && return 1
 +
 +   local session_file="/run/systemd/sessions/$session_id"
