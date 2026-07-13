@@ -6,7 +6,7 @@ Omnissa Horizon Client on Linux has multiple graphical bugs when running under *
 
 ## Horizon Client Next (Tech Preview)
 
-Starting with version **2512**, Omnissa ships a second client called **Horizon Client Next** alongside the classic client. It is a complete rewrite using **.NET with Avalonia UI** (Skia/Vulkan rendering) instead of GTK3. The latest release is **2512.1** (February 2026).
+Starting with version **2512**, Omnissa ships a second client called **Horizon Client Next** alongside the classic client. It is a complete rewrite using **.NET with Avalonia UI** (Skia/Vulkan rendering) instead of GTK3. The latest release is **2603** (8.18.0, March 2026).
 
 Horizon Client Next does not suffer from the GTK3/XWayland bugs documented below (dark theme, HiDPI, Wayland warning). It handles Wayland, HiDPI scaling, and dark themes natively. Since the March 2026 update, it also supports **folder organization** for desktops and apps (previously Windows-only) and an **enhanced, repositionable in-session toolbar** on all platforms.
 
@@ -25,6 +25,8 @@ sudo ln -sf /usr/lib/omnissa/horizon/bin/horizon-client-next-bundle/horizon-clie
 ```
 
 > **Note:** On Fedora, the RPM package creates `/usr/bin/horizon-client-next` automatically. This step is only needed for bundle-based installs.
+>
+> **Update:** Starting with **2603**, the client ships a `/usr/bin/horizon-client-next` launcher script directly (verified with the tarball distribution). The manual symlink is only needed for 2512.x.
 
 #### All Distributions
 
@@ -313,12 +315,12 @@ See `configs/horizon-preferences.example` for a full recommended configuration.
 
 > **Note:** Horizon Client Next is still in **Tech Preview** and not yet production-ready. This is a known limitation of the new client, not something that can be fixed with a patch.
 
-**Applies to you if:** You use **Horizon Client Next 2512.1** (Build 8.17.0) with **multiple monitors**.
+**Applies to you if:** You use **Horizon Client Next 2512.1 (Build 8.17.0) or 2603 (Build 8.18.0)** with **multiple monitors**.
 
 ### Symptoms
 
 - Client closes immediately after selecting a virtual desktop (no error dialog)
-- Segfault in `libclientSdkCPrimitive.so` at offset `0x99791` (NULL pointer dereference)
+- Segfault in `libclientSdkCPrimitive.so` (NULL pointer dereference) -- offset `0x99791` in 2512.1, `0x1d9409` in 2603
 - `dmesg` shows: `segfault at 10 ... in libclientSdkCPrimitive.so`
 
 ### Root Cause
@@ -329,7 +331,7 @@ The `--desktopSize` CLI flag and `view.multiMonitorMode` preference are ignored 
 
 ### Status
 
-No fix available. Multi-monitor desktop sessions do not work with Horizon Client Next on Linux as of version 2512.1.
+No fix available. Still present in **2603** (8.18.0, Build 24120621798, retested July 2026) -- the crash location moved but the NULL pointer dereference in `CdkClientInfoGetDisplayInfo` is unchanged. Multi-monitor desktop sessions do not work with Horizon Client Next on Linux as of version 2603.
 
 ---
 
@@ -347,7 +349,7 @@ No fix available. Multi-monitor desktop sessions do not work with Horizon Client
 
 ### Horizon Client Next (Avalonia)
 
-- **Multi-monitor crash (Bug 4)** -- Horizon Client Next 2512.1 crashes with a segfault in `libclientSdkCPrimitive.so` when launching a desktop on multi-monitor setups. No fix available.
+- **Multi-monitor crash (Bug 4)** -- Horizon Client Next (2512.1 and 2603) crashes with a segfault in `libclientSdkCPrimitive.so` when launching a desktop on multi-monitor setups. No fix available.
 
 - **URI handlers not registered by default** -- The installer does not register `vmware-view://` and `horizon-client://` URI schemes for the Next client. Use the desktop entry override above to fix this.
 
