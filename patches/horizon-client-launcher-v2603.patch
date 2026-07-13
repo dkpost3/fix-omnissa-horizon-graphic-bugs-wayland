@@ -1,0 +1,22 @@
+--- a/usr/bin/horizon-client
++++ b/usr/bin/horizon-client
+@@ -40,6 +40,19 @@
+ # We use x11 lib in client, so cannot use wayland now
+ export GDK_BACKEND=x11
+ 
++# [Fix 2b] Scale UI for HiDPI displays. GTK3 under XWayland only supports
++# integer scaling. GDK_SCALE=2 doubles all UI elements.
++# Uncomment if the UI is too small on HiDPI displays.
++# export GDK_SCALE=2
++
++# [Fix 2a] Force light GTK theme.
++# Horizon's hardcoded colors assume a light background.
++export GTK_THEME=Adwaita
++
++# [Fix 2c] Tell Horizon Client that the session is X11.
++export XDG_SESSION_TYPE=x11
++unset WAYLAND_DISPLAY
++
+ # Add path to LD_LIBRARY_PATH
+ vm_append_to_library_path() {
+    local ldBasePath
